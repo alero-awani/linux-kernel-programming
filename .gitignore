@@ -1,0 +1,4 @@
+.vagrant
+ubuntu-*.box
+*.log
+*.swp

@@ -61,3 +61,40 @@ How do we know which version exactly of the Linux kernel this code is by just lo
 ```sh
 head Makefile
 ```
+
+### eBPF Program
+
+[Install BCC](https://github.com/iovisor/bcc/blob/master/INSTALL.md#install-build-dependencies-1)
+
+1. Install build dependencies
+
+```sh
+sudo apt-get -y install zip bison build-essential cmake flex git libedit-dev \
+  libllvm3.9 llvm-3.9-dev libclang-3.9-dev python zlib1g-dev libelf-dev python3-setuptools \
+  liblzma-dev arping netperf iperf
+```
+
+```sh
+sudo apt install cmake
+```
+
+1. Install and compile BCC
+
+```sh
+git clone https://github.com/iovisor/bcc.git
+mkdir bcc/build; cd bcc/build
+cmake ..
+make
+sudo make install
+cmake -DPYTHON_CMD=python3 .. # build python3 binding
+pushd src/python/
+make
+sudo make install
+popd
+```
+
+1. Confirm python
+
+```sh
+python3 hello.py
+```

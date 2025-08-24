@@ -123,3 +123,28 @@ Then run the command before this again.
 ```sh
 ls -la .config
 ```
+
+### Configure the Kernel using menuconfig UI
+
+We now have an initial kernel config file (.config) generated for us via the localmodconfig Makefile target, as shown in detail in the previous section, which is a good starting point. Now, we want to further examine and fine-tune our kernel's configuration and we will be using the menuconfig Makefile target.
+
+```sh
+make menuconfig
+```
+
+- `<*>`: On, feature compiled and built in (compiled in) the
+kernel image (y)
+- `<M>`: Module, feature compiled and built as a kernel module (an LKM) (m)
+- `< >`: Off, not built at all (n)
+
+The kernel configuration is written into a simple ASCII text file in the root of the kernel source tree, named .config. That is, it's saved in `${LLKD_KSRC}/.config`
+
+We will build the kernel (and modules) with these new config options, boot from it, and verify that the preceding kernel config options were set as we wanted.
+
+Every single kernel config option is associated with a config variable of the form `CONFIG_<FOO>`, where `<FOO>`, of course, is replaced with an appropriate name. Internally, these become macros that the build system and indeed the kernel source code uses.
+
+```sh
+grep IKCONFIG .config
+```
+
+`Caution`: it's best to NOT attempt to edit the .config file manually ("by hand"). There are several inter-dependencies you may not be aware of; always use the kbuild menu system (we suggest via make menuconfig) to edit it.

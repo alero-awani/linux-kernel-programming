@@ -52,7 +52,7 @@ tar xf ~/Downloads/linux-5.4.296.tar.xz
 
 As a convenience, and good practice, let's set up an environment variable to point to the location of the root of our kernel source tree:
 
-`export LLKD_KSRC=${HOME}/kernels/linux-5.4.296`
+`export LLKD_KSRC=${HOME}/Kernels/linux-5.4.296`
 
 We extract the kernel source tree into any directory under our home directory (or even elsewhere), unlike in the old days when the tree was always extracted under a root-writeable location (often, /usr/src/). Nowadays, just say no (to that).
 
@@ -97,4 +97,29 @@ popd
 
 ```sh
 python3 hello.py
+```
+
+### Using the localmodconfig approach as a starting point for Kernel Configuration
+
+This is an approach where you base the kernel configuration on the existing (or another) system's kernel modules.
+
+This existing kernel modules-only approach is a good one when the goal is to obtain a starting point for kernel config on an x86-based system by keeping it relatively small and thus make the build quicker as well.
+
+First obtain a snapshot of the currently loaded kernel modules, and then have the kbuild system operate upon it by specifying the localmodconfig target, like so:
+
+```sh
+lsmod > /tmp/lsmod.now
+cd ${LLKD_KSRC} ; make LSMOD=/tmp/lsmod.now localmodconfig
+```
+
+To start over in case of an error
+
+```sh
+cd ${LLKD_KSRC} && make mrproper
+```
+
+Then run the command before this again. 
+
+```sh
+ls -la .config
 ```

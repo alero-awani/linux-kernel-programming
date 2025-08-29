@@ -1,5 +1,23 @@
 # Linux Kernel Programming
 
+## Table of Contents
+
+1. [Setting up the Environment](#setting-up-the-environment)
+   - [Setup Vagrant](#setup-vagrant)
+   - [Update the packages](#update-the-packages)
+2. [Kernel Source Tree](#kernel-source-tree)
+   - [Step 1 – obtaining a Linux kernel source tree](#step-1--obtaining-a-linux-kernel-source-tree)
+   - [Step 2 – extracting the kernel source tree](#step-2--extracting-the-kernel-source-tree)
+3. [Kernel Configuration](#kernel-configuration)
+   - [Using the localmodconfig approach](#using-the-localmodconfig-approach-as-a-starting-point-for-kernel-configuration)
+   - [Configure the Kernel using menuconfig UI](#configure-the-kernel-using-menuconfig-ui)
+4. [Building the Linux Kernel from Source](#building-the-linux-kernel-from-source)
+   - [STEP 1: Building the Kernel Image and Modules](#step-1-building-the-kernel-image-and-modules)
+   - [STEP 2: Installing the Kernel Modules](#step-2-installing-the-kernel-modules)
+   - [STEP 3: Generating the initramfs image and bootloader setup](#step-3-generating-the-initramfs-image-and-bootloader-setup)
+   - [Understanding the initramfs framework](#understanding-the-initramfs-framework)
+5. [eBPF Program](#ebpf-program)
+
 ## Setting up the Environment
 
 ### Setup Vagrant
@@ -243,3 +261,25 @@ All the kernel config options that were marked as m have actually now been built
 
 ### STEP 3: Generating the initramfs image and bootloader setup
 
+1. Generate the initramfs (short for initial ram filesystem) image file as well as update the bootloader.
+
+    ```sh
+    sudo make install
+    ```
+
+So what happens at this step:
+
+- An `install.sh` script copies the following files into the `/boot` folder
+  - config-5.4.296llkd01
+  - System.map-5.4.296llkd01
+  - initrd.img-5.4.296llkd01
+  - vmlinuz-5.4.296llkd01
+- The `initramfs` image is built as well, Once built, the initramfs image is also copied into the `/boot` directory. 
+- The file named `vmlinuz-<kernel-ver>` is a copy of the arch/x86/boot/bzImage file
+- The GRUB bootloader configuration file located at /boot/grub/grub.cfg is updated to reflect the fact that a new kernel is now available for boot.
+
+    It is the compressed kernel image – the image file that the bootloader will be configured to load into RAM, uncompress, and jump to its entry point, thus handing over control to the kernel!
+
+A brand new 5.4 kernel, along with all requested kernel modules and the initramfs image, have been generated, and the (GRUB) bootloader has been updated. All that remains is to reboot the system, select the new kernel image on boot (from the bootloader menu screen), boot up, log in, and verify that all is okay.
+
+### Understanding the initramfs framework

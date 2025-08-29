@@ -1,0 +1,203 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+  
+  # Router VM
+  config.vm.define "router" do |router|
+    router.vm.hostname = "router"
+    router.vm.network "private_network", ip: "192.168.56.10"
+    router.vm.provider "virtualbox" do |vb|
+      vb.memory = "512"
+      vb.cpus = 1
+    end
+    
+    router.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y iptables-persistent
+      # Enable IP forwarding
+      echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
+      sysctl -p
+      
+      # Configure as NAT gateway
+      iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+      iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+      iptables -A FORWARD -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      
+      # Save iptables rules
+      iptables-save > /etc/iptables/rules.v4
+    SHELL
+  end
+
+  # Master node
+  config.vm.define "k8s-master" do |master|
+    master.vm.hostname = "k8s-master"
+    master.vm.network "private_network", ip: "192.168.56.11"
+    master.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+    
+    master.vm.provision "shell", inline: <<-SHELL
+      # Set up routing through router
+      route add default gw 192.168.56.10
+      
+      # Install Docker
+      apt-get update
+      apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io
+      
+      # Configure Docker daemon for Kubernetes
+      cat > /etc/docker/daemon.json <<EOF
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+      
+      systemctl enable docker
+      systemctl daemon-reload
+      systemctl restart docker
+      
+      # Install kubeadm, kubelet and kubectl
+      curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+      cat <<EOF | tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+      apt-get update
+      apt-get install -y kubelet kubeadm kubectl
+      apt-mark hold kubelet kubeadm kubectl
+      
+      # Disable swap
+      swapoff -a
+      sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+      
+      # Configure kubelet
+      echo "KUBELET_EXTRA_ARGS=--node-ip=192.168.56.11" > /etc/default/kubelet
+      systemctl daemon-reload
+      systemctl restart kubelet
+    SHELL
+  end
+
+  # Worker node 1
+  config.vm.define "k8s-worker1" do |worker1|
+    worker1.vm.hostname = "k8s-worker1"
+    worker1.vm.network "private_network", ip: "192.168.56.12"
+    worker1.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      vb.cpus = 1
+    end
+    
+    worker1.vm.provision "shell", inline: <<-SHELL
+      # Set up routing through router
+      route add default gw 192.168.56.10
+      
+      # Install Docker
+      apt-get update
+      apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io
+      
+      # Configure Docker daemon for Kubernetes
+      cat > /etc/docker/daemon.json <<EOF
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+      
+      systemctl enable docker
+      systemctl daemon-reload
+      systemctl restart docker
+      
+      # Install kubeadm, kubelet and kubectl
+      curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+      cat <<EOF | tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+      apt-get update
+      apt-get install -y kubelet kubeadm kubectl
+      apt-mark hold kubelet kubeadm kubectl
+      
+      # Disable swap
+      swapoff -a
+      sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+      
+      # Configure kubelet
+      echo "KUBELET_EXTRA_ARGS=--node-ip=192.168.56.12" > /etc/default/kubelet
+      systemctl daemon-reload
+      systemctl restart kubelet
+    SHELL
+  end
+
+  # Worker node 2
+  config.vm.define "k8s-worker2" do |worker2|
+    worker2.vm.hostname = "k8s-worker2"
+    worker2.vm.network "private_network", ip: "192.168.56.13"
+    worker2.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      vb.cpus = 1
+    end
+    
+    worker2.vm.provision "shell", inline: <<-SHELL
+      # Set up routing through router
+      route add default gw 192.168.56.10
+      
+      # Install Docker
+      apt-get update
+      apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io
+      
+      # Configure Docker daemon for Kubernetes
+      cat > /etc/docker/daemon.json <<EOF
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+      
+      systemctl enable docker
+      systemctl daemon-reload
+      systemctl restart docker
+      
+      # Install kubeadm, kubelet and kubectl
+      curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+      cat <<EOF | tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+      apt-get update
+      apt-get install -y kubelet kubeadm kubectl
+      apt-mark hold kubelet kubeadm kubectl
+      
+      # Disable swap
+      swapoff -a
+      sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+      
+      # Configure kubelet
+      echo "KUBELET_EXTRA_ARGS=--node-ip=192.168.56.13" > /etc/default/kubelet
+      systemctl daemon-reload
+      systemctl restart kubelet
+    SHELL
+  end
+end

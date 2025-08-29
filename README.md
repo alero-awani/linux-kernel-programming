@@ -68,36 +68,36 @@ head Makefile
 
 1. Install build dependencies
 
-```sh
-sudo apt-get -y install zip bison build-essential cmake flex git libedit-dev \
-  libllvm3.9 llvm-3.9-dev libclang-3.9-dev python zlib1g-dev libelf-dev python3-setuptools \
-  liblzma-dev arping netperf iperf
-```
+    ```sh
+    sudo apt-get -y install zip bison build-essential cmake flex git libedit-dev \
+      libllvm3.9 llvm-3.9-dev libclang-3.9-dev python zlib1g-dev libelf-dev python3-setuptools \
+      liblzma-dev arping netperf iperf
+    ```
 
-```sh
-sudo apt install cmake
-```
+    ```sh
+    sudo apt install cmake
+    ```
 
 1. Install and compile BCC
 
-```sh
-git clone https://github.com/iovisor/bcc.git
-mkdir bcc/build; cd bcc/build
-cmake ..
-make
-sudo make install
-cmake -DPYTHON_CMD=python3 .. # build python3 binding
-pushd src/python/
-make
-sudo make install
-popd
-```
+    ```sh
+    git clone https://github.com/iovisor/bcc.git
+    mkdir bcc/build; cd bcc/build
+    cmake ..
+    make
+    sudo make install
+    cmake -DPYTHON_CMD=python3 .. # build python3 binding
+    pushd src/python/
+    make
+    sudo make install
+    popd
+    ```
 
 1. Confirm python
 
-```sh
-python3 hello.py
-```
+    ```sh
+    python3 hello.py
+    ```
 
 ### Using the localmodconfig approach as a starting point for Kernel Configuration
 
@@ -148,3 +148,20 @@ grep IKCONFIG .config
 ```
 
 `Caution`: it's best to NOT attempt to edit the .config file manually ("by hand"). There are several inter-dependencies you may not be aware of; always use the kbuild menu system (we suggest via make menuconfig) to edit it.
+
+### Building the Linux Kernel from Source
+
+This includes:
+    - building the kernel image and modules
+    - installing the kernel modules
+    - generating the initramfs image and bootloader setup (Understanding the initramfs framework)
+    - customizing the GRUB bootloader
+    - Verifying our new kernel's configuration
+
+1. Run the command `make help` to see all possible make targets.
+
+    - `vmlinux` is the uncompressed kernel image (it can be large)
+    - The `modules` target implies that all kernel config options marked as m (for module) will be built as kernel modules.
+    - `bzImage` is architecture-specific. On an x86[-64] system, this is the name of the compressed kernel image – the one the bootloader will actually load into RAM, uncompress in memory, and boot into; in effect, the kernel image file.
+
+1. Ensure you're in the root of the configured kernel source tree and type `make`.

@@ -1,5 +1,10 @@
 # Linux Kernel Programming
 
+## References
+
+- [Linux Kernel Programming by Kaiwan N. Billimoria](https://www.oreilly.com/library/view/linux-kernel-programming/9781789953435/)
+- [Learning eBPF by Liz Rice](https://www.oreilly.com/library/view/learning-ebpf/9781098135119/)
+
 ## Table of Contents
 
 1. [Setting up the Environment](#setting-up-the-environment)

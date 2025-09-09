@@ -5,6 +5,7 @@
 - [Linux Kernel Programming by Kaiwan N. Billimoria](https://www.oreilly.com/library/view/linux-kernel-programming/9781789953435/)
 - [Learning eBPF by Liz Rice](https://www.oreilly.com/library/view/learning-ebpf/9781098135119/)
 
+
 ## Table of Contents
 
 1. [Setting up the Environment](#setting-up-the-environment)
@@ -86,43 +87,6 @@ How do we know which version exactly of the Linux kernel this code is by just lo
 ```sh
 head Makefile
 ```
-
-### eBPF Program
-
-[Install BCC](https://github.com/iovisor/bcc/blob/master/INSTALL.md#install-build-dependencies-1)
-
-1. Install build dependencies
-
-    ```sh
-    sudo apt-get -y install zip bison build-essential cmake flex git libedit-dev \
-      libllvm3.9 llvm-3.9-dev libclang-3.9-dev python zlib1g-dev libelf-dev python3-setuptools \
-      liblzma-dev arping netperf iperf
-    ```
-
-    ```sh
-    sudo apt install cmake
-    ```
-
-1. Install and compile BCC
-
-    ```sh
-    git clone https://github.com/iovisor/bcc.git
-    mkdir bcc/build; cd bcc/build
-    cmake ..
-    make
-    sudo make install
-    cmake -DPYTHON_CMD=python3 .. # build python3 binding
-    pushd src/python/
-    make
-    sudo make install
-    popd
-    ```
-
-1. Confirm python
-
-    ```sh
-    python3 hello.py
-    ```
 
 ### Using the localmodconfig approach as a starting point for Kernel Configuration
 
@@ -308,9 +272,55 @@ lsinitramfs /boot/initrd.img-5.4.296llkd01
 
 ### STEP 4: Customizing the GRUB bootloader
 
-5.4.0-150-generic
+### Further Reading
 
-"Advanced options for Ubuntu>Ubuntu, with Linux 5.4.0-150-generic"
+- [Kernel development setup with Vagrant](https://planeta.github.io/programming/kernel-development-setup-with-vagrant/)
 
+## eBPF Programs
 
-/boot/grub/mybackground.png
+[Install BCC](https://github.com/iovisor/bcc/blob/master/INSTALL.md#install-build-dependencies-1)
+
+1. Install build dependencies
+
+    ```sh
+    sudo apt-get -y install zip bison build-essential cmake flex git libedit-dev \
+      libllvm3.9 llvm-3.9-dev libclang-3.9-dev python zlib1g-dev libelf-dev python3-setuptools \
+      liblzma-dev arping netperf iperf
+    ```
+
+    ```sh
+    sudo apt install cmake
+    ```
+
+1. Install and compile BCC
+
+    ```sh
+    git clone https://github.com/iovisor/bcc.git
+    mkdir bcc/build; cd bcc/build
+    cmake ..
+    make
+    sudo make install
+    cmake -DPYTHON_CMD=python3 .. # build python3 binding
+    pushd src/python/
+    make
+    sudo make install
+    popd
+    ```
+
+1. Confirm python
+
+    ```sh
+    python3 hello.py
+    ```
+
+### eBPF Maps
+
+To run the hello-map program
+
+```sh
+sudo python3 hello-map.py
+```
+
+This program
+
+- Populates a hash table with key–value pairs, where the key is a user ID and the value is a counter for the number of times execve is called by a process running under that user ID.
